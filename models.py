@@ -9,7 +9,7 @@ class Note:
         self.priority = priority
         self.created = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    def to_dict(self):
+    def to_dict(self): #будет сохраняться в виде словаря в json
         return {
             "id": self.id,
             "title": self.title,
@@ -20,7 +20,7 @@ class Note:
         }
 
     @staticmethod
-    def from_dict(data):
+    def from_dict(data): #ля чтения заметок из файла, при загрузке в storage
         note = Note(
             data["id"],
             data["title"],

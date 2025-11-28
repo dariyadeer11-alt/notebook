@@ -10,8 +10,8 @@ def load_notes():
         return []
     try:
         with open(FILE_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return [Note.from_dict(item) for item in data]
+            data = json.load(f) #загружает JSON в список словарей
+            return [Note.from_dict(item) for item in data] #преобразует каждый словарь в список объектов
     except Exception:
         return []
 

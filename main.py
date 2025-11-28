@@ -1,5 +1,5 @@
-import argparse
-import sys
+import argparse #модуль для разбора аргументов командной строки
+import sys #доступа к аргументам и системным функциям
 import tkinter as tk
 from .gui import NoteApp
 from .commands import add_note, list_notes, search_notes, delete_note
@@ -16,7 +16,7 @@ def setup_cli_parser():
     add_parser.add_argument('--body', required=True, help='Текст заметки')
     add_parser.add_argument('--status', default='todo', help='Статус (todo, in_progress, done)')
     add_parser.add_argument('--priority', default='medium', help='Приоритет (low, medium, high)')
-    add_parser.set_defaults(func=add_note)
+    add_parser.set_defaults(func=add_note) #устанавливаем функцию для выполнения
 
     # Команда list
     list_parser = subparsers.add_parser('list', help='Показать список заметок')
@@ -44,7 +44,7 @@ def main():
         parser.add_argument('--gui', action='store_true', help='Запустить графический интерфейс')
 
         try:
-            args = parser.parse_args()
+            args = parser.parse_args() #разбирает аргументы
         except SystemExit:
             return
 
@@ -52,7 +52,7 @@ def main():
             root = tk.Tk()
             app = NoteApp(root)
             root.mainloop()
-        elif hasattr(args, 'func'):
+        elif hasattr(args, 'func'): #если есть атрибут (func)
             # CLI-команда
             args.func(args)
         else:

@@ -1,9 +1,6 @@
 # notebookk/commands.py
-import argparse
 from .storage import load_notes, save_notes
 from .models import Note
-import sys
-
 
 def get_next_id(notes):
     """Получить следующий ID для новой заметки"""
@@ -34,11 +31,11 @@ def add_note(args):
 def list_notes(args):
     """Показать список заметок"""
     notes = load_notes()
-    filtered = notes
+    filtered = notes #копия для фильтра
 
     # Фильтрация по статусу
     if args.status:
-        filtered = [n for n in filtered if n.status == args.status]
+        filtered = [n for n in filtered if n.status == args.status] #оставляет только те, что совпали с веденным пользователем значением
 
     # Фильтрация по приоритету
     if args.priority:
@@ -49,16 +46,16 @@ def list_notes(args):
         return
 
     print(f"📋 Всего заметок: {len(filtered)}")
-    print("-" * 80)
+    print("-" * 100)
     for note in filtered:
         print(f"ID: {note.id:3d} | {note.title:<30} | {note.status:10} | {note.priority:7} | {note.created}")
-    print("-" * 80)
+    print("-" * 100)
 
 
 def search_notes(args):
     """Поиск заметок по ключевому слову"""
     notes = load_notes()
-    keyword = args.keyword.lower()
+    keyword = args.keyword.lower() #ключ в ниж регистр
     found = []
 
     for note in notes:
@@ -70,11 +67,11 @@ def search_notes(args):
         return
 
     print(f"🔍 Найдено {len(found)} заметок по запросу '{args.keyword}':")
-    print("-" * 80)
+    print("-" * 100)
     for note in found:
         print(f"ID: {note.id:3d} | {note.title:<30} | {note.status:10} | {note.priority:7}")
         print(f"   {note.body[:100]}{'...' if len(note.body) > 100 else ''}")
-        print("-" * 80)
+        print("-" * 100)
 
 
 def delete_note(args):

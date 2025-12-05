@@ -3,7 +3,6 @@
 """
 
 import unittest
-import json
 from datetime import datetime
 from notebookk.models import Note
 

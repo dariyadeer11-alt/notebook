@@ -177,7 +177,7 @@ def search_notes(keyword):
                 SELECT id, title, body, status, priority, 
                        TO_CHAR(created, 'YYYY-MM-DD HH24:MI') as created
                 FROM notes 
-                WHERE title ILIKE %s OR body ILIKE %s      --  Поиск в заголовке ИЛИ тексте
+                WHERE title ILIKE %s OR body ILIKE %s      --  Оператор поиска: поиск в заголовке ИЛИ тексте
                 ORDER BY created DESC
             """, (f'%{keyword}%', f'%{keyword}%'))   #для поиска подстроки
 

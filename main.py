@@ -11,8 +11,7 @@ import argparse
 import sys
 import tkinter as tk
 from .gui import NoteApp
-from .commands import add_note, list_notes, search_notes, delete_note
-
+from .commands import add_note, list_notes, search_notes_cli as search_notes, delete_note_cli as delete_note
 
 def setup_cli_parser():
     """

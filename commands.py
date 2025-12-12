@@ -1,17 +1,11 @@
 """
+commands.py
 Модуль CLI команд приложения.
-
-Содержит функции для выполнения команд из командной строки:
-- Добавление заметок
-- Просмотр списка заметок
-- Поиск заметок
-- Удаление заметок
-
-Все функции принимают аргументы парсера и работают с хранилищем.
 """
 
-from .storage import load_notes, save_notes
+from .storage import load_notes, save_note, delete_note_by_id, search_notes, get_note_by_id
 from .models import Note
+from notebookk.database import init_db
 
 
 def get_next_id(notes):
@@ -43,23 +37,23 @@ def add_note(args):
     Prints:
         Информация о добавленной заметке или сообщение об ошибке
     """
-    notes = load_notes()
-    new_id = get_next_id(notes)
+    # Инициализируем БД при первом использовании
+    init_db()
 
     # Создаем новую заметку
     note = Note(
-        new_id,
+        0,  # ID будет присвоен базой данных
         args.title,
         args.body,
         args.status,
         args.priority
     )
 
-    notes.append(note)
-    save_notes(notes)
+    # Сохраняем в БД
+    save_note(note)
 
     # Выводим информацию о добавленной заметке
-    print(f"✅ Заметка добавлена! ID: {new_id}")
+    print(f"✅ Заметка добавлена! ID: {note.id}")
     print(f"   Заголовок: {note.title}")
     print(f"   Статус: {note.status}, Приоритет: {note.priority}")
     print(f"   Создано: {note.created}")
@@ -77,6 +71,8 @@ def list_notes(args):
     Prints:
         Отформатированную таблицу с заметками или сообщение об отсутствии
     """
+    init_db()
+
     notes = load_notes()
     filtered = notes.copy()  # Создаем копию для фильтрации
 
@@ -112,7 +108,7 @@ def list_notes(args):
     print("-" * 100)
 
 
-def search_notes(args):
+def search_notes_cli(args):
     """
     Ищет заметки по ключевому слову в заголовке или тексте.
 
@@ -123,14 +119,8 @@ def search_notes(args):
     Prints:
         Список найденных заметок с фрагментами текста
     """
-    notes = load_notes()
-    keyword = args.keyword.lower()  # Приводим к нижнему регистру для регистронезависимого поиска
-    found = []
-
-    # Поиск по всем заметкам
-    for note in notes:
-        if keyword in note.title.lower() or keyword in note.body.lower():
-            found.append(note)
+    init_db()
+    found = search_notes(args.keyword)
 
     if not found:
         print(f"🔍 По запросу '{args.keyword}' ничего не найдено")
@@ -145,16 +135,16 @@ def search_notes(args):
 
         # Поиск и выделение ключевого слова в тексте
         body_lower = note.body.lower()
-        keyword_pos = body_lower.find(keyword)
+        keyword_pos = body_lower.find(args.keyword.lower())
 
         if keyword_pos != -1:
             # Показываем фрагмент текста с ключевым словом
             start = max(0, keyword_pos - 30)
-            end = min(len(note.body), keyword_pos + len(keyword) + 70)
+            end = min(len(note.body), keyword_pos + len(args.keyword) + 70)
             snippet = note.body[start:end]
 
             # Заменяем ключевое слово на выделенную версию
-            original_word = note.body[keyword_pos:keyword_pos + len(keyword)]
+            original_word = note.body[keyword_pos:keyword_pos + len(args.keyword)]
             highlighted = snippet.replace(original_word, f"\033[1;33m{original_word}\033[0m")
 
             print(f"   ...{highlighted}..." if start > 0 else f"   {highlighted}")
@@ -165,7 +155,7 @@ def search_notes(args):
         print("-" * 100)
 
 
-def delete_note(args):
+def delete_note_cli(args):
     """
     Удаляет заметку по указанному ID.
 
@@ -176,19 +166,21 @@ def delete_note(args):
     Prints:
         Сообщение об успешном удалении или ошибке если заметка не найдена
     """
-    notes = load_notes()
-    original_count = len(notes)
-
-    # Фильтруем заметки, оставляя все кроме удаляемой
-    notes = [n for n in notes if n.id != args.id]
-
-    if len(notes) == original_count:
+    init_db()
+    # Проверяем существование заметки
+    note = get_note_by_id(args.id)
+    if not note:
         print(f"❌ Заметка с ID {args.id} не найдена")
         # Показываем доступные ID для справки
+        notes = load_notes()
         available_ids = [n.id for n in notes[:5]]  # Первые 5 ID
         if available_ids:
             print(f"   Доступные ID: {', '.join(map(str, available_ids))}...")
         return
 
-    save_notes(notes)
-    print(f"🗑️  Заметка с ID {args.id} удалена")
+    # Удаляем заметку
+    delete_note_by_id(args.id)
+
+    print(f"🗑️  Заметка удалена!")
+    print(f"   ID: {note.id}")
+    print(f"   Заголовок: {note.title}")

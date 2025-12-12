@@ -8,8 +8,9 @@
 
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
-from .storage import load_notes, save_notes
+from .storage import load_notes, save_notes, delete_note_by_id, get_note_by_id
 from .models import Note
+from notebookk.database import init_db
 
 
 class NoteApp:
@@ -33,6 +34,9 @@ class NoteApp:
         self.root.title("📒 Менеджер заметок Notebookk")
         self.root.geometry("1000x650")
         self.root.configure(bg="#f4f4f4")
+
+        # Инициализируем БД
+        init_db()
 
         # Загружаем заметки и определяем следующий ID
         self.notes = load_notes()
@@ -226,14 +230,11 @@ class NoteApp:
     def add_note(self):
         """
         Добавляет новую заметку из данных формы.
-
-        Валидирует введенные данные, создает новую заметку,
-        сохраняет её и обновляет список.
         """
         title = self.title_entry.get().strip()
         body = self.body_text.get(1.0, tk.END).strip()
 
-        # Валидация данных
+        # Валидация данных (без изменений)
         if not title:
             messagebox.showwarning("Ошибка", "Введите заголовок заметки!")
             self.title_entry.focus()
@@ -246,17 +247,25 @@ class NoteApp:
             messagebox.showwarning("Ошибка", "Заголовок слишком длинный (макс. 100 символов)")
             return
 
-        # Создаем и сохраняем заметку
+        # Создаем новую заметку
         note = Note(
-            self.next_id,
+            self.next_id,  # Временный ID, будет переопределен БД
             title,
             body,
             self.status_var.get(),
             self.priority_var.get()
         )
-        self.notes.append(note)
-        self.next_id += 1
-        save_notes(self.notes)
+
+        # Сохраняем в БД
+        try:
+            save_notes(note)  # Этот метод обновит ID и created
+            self.next_id = max(self.next_id, note.id + 1)
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Не удалось сохранить заметку: {e}")
+            return
+
+        # Обновляем локальный список
+        self.notes = load_notes()
 
         # Очищаем форму
         self.title_entry.delete(0, tk.END)
@@ -270,6 +279,7 @@ class NoteApp:
             f"ID: {note.id}\n"
             f"Заголовок: {title[:50]}{'...' if len(title) > 50 else ''}"
         )
+
 
     def refresh_list(self, event=None):
         """
@@ -439,12 +449,12 @@ class NoteApp:
         note_id = item["values"][0]
 
         # Находим заметку для показа информации
-        note_to_delete = next((n for n in self.notes if n.id == note_id), None)
+        note_to_delete = get_note_by_id(note_id)
         if not note_to_delete:
             messagebox.showerror("Ошибка", "Заметка не найдена!")
             return
 
-        # Запрашиваем подтверждение
+        # Запрашиваем подтверждение (без изменений)
         confirm = messagebox.askyesno(
             "Подтверждение удаления",
             f"Вы уверены, что хотите удалить заметку?\n\n"
@@ -457,9 +467,15 @@ class NoteApp:
         if not confirm:
             return
 
-        # Удаляем заметку
-        self.notes = [n for n in self.notes if n.id != note_id]
-        save_notes(self.notes)
+        # Удаляем заметку из БД
+        try:
+            delete_note_by_id(note_id)
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Не удалось удалить заметку: {e}")
+            return
+
+        # Обновляем локальный список
+        self.notes = load_notes()
 
         # Обновляем список
         self.refresh_list()

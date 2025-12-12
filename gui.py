@@ -8,7 +8,7 @@
 
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
-from .storage import load_notes, save_notes, delete_note_by_id, get_note_by_id
+from .storage import load_notes, save_note, delete_note_by_id, get_note_by_id
 from .models import Note
 from notebookk.database import init_db
 

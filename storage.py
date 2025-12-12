@@ -17,14 +17,14 @@ def load_notes():
         Если таблица не существует, возвращает пустой список.
     """
     try:
-        with Database.get_cursor() as cursor:
+        with Database.get_cursor() as cursor: # ← Контекстный менеджер для работы с БД
             cursor.execute("""
                 SELECT id, title, body, status, priority, 
-                       TO_CHAR(created, 'YYYY-MM-DD HH24:MI') as created
+                       TO_CHAR(created, 'YYYY-MM-DD HH24:MI') as created -- Преобразование в строку даты, и переименовывем to_char() в created
                 FROM notes 
-                ORDER BY created DESC
+                ORDER BY created DESC -- По убыванию
             """)
-            notes_data = cursor.fetchall()
+            notes_data = cursor.fetchall() # ← Получаем все строки результата
 
             # Преобразуем словари в объекты Note
             notes = []
@@ -67,9 +67,9 @@ def save_notes(notes):
             for note in notes:
                 cursor.execute("""
                     INSERT INTO notes (id, title, body, status, priority, created)
-                    VALUES (%s, %s, %s, %s, %s, %s::timestamp)
-                    ON CONFLICT (id) DO UPDATE SET
-                        title = EXCLUDED.title,
+                    VALUES (%s, %s, %s, %s, %s, %s::timestamp)      -- Явное приведение к типу timestamp
+                    ON CONFLICT (id) DO UPDATE SET     -- Вставка с обработкой конфликтов
+                        title = EXCLUDED.title,     -- EXCLUDED - ссылка на данные которые необходимо вставить
                         body = EXCLUDED.body,
                         status = EXCLUDED.status,
                         priority = EXCLUDED.priority,
@@ -100,7 +100,7 @@ def save_note(note):
             cursor.execute("""
                 INSERT INTO notes (title, body, status, priority)
                 VALUES (%s, %s, %s, %s)
-                RETURNING id, TO_CHAR(created, 'YYYY-MM-DD HH24:MI') as created
+                RETURNING id, TO_CHAR(created, 'YYYY-MM-DD HH24:MI') as created    -- Получает id и дату создания
             """, (
                 note.title,
                 note.body,
@@ -131,8 +131,8 @@ def update_note(note):
                     body = %s, 
                     status = %s, 
                     priority = %s,
-                    updated = CURRENT_TIMESTAMP
-                WHERE id = %s
+                    updated = CURRENT_TIMESTAMP     -- Автоматическое обновление времени изменения
+                WHERE id = %s       -- Какую именно запись обновлять
             """, (
                 note.title,
                 note.body,
@@ -177,9 +177,9 @@ def search_notes(keyword):
                 SELECT id, title, body, status, priority, 
                        TO_CHAR(created, 'YYYY-MM-DD HH24:MI') as created
                 FROM notes 
-                WHERE title ILIKE %s OR body ILIKE %s
+                WHERE title ILIKE %s OR body ILIKE %s      --  Поиск в заголовке ИЛИ тексте
                 ORDER BY created DESC
-            """, (f'%{keyword}%', f'%{keyword}%'))
+            """, (f'%{keyword}%', f'%{keyword}%'))   #для поиска подстроки
 
             notes_data = cursor.fetchall()
 
